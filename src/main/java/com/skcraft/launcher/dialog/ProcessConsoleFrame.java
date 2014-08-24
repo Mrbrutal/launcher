@@ -41,8 +41,7 @@ public class ProcessConsoleFrame extends ConsoleFrame {
      */
     public ProcessConsoleFrame(int numLines, boolean colorEnabled) {
         super(_("console.title"), numLines, colorEnabled);
-        processOut = new PrintWriter(
-                getMessageLog().getOutputStream(new Color(0, 0, 255)), true);
+        processOut = new PrintWriter(getMessageLog().getOutputStream(new Color(0, 0, 255)), true);
         initComponents();
         updateComponents();
     }
@@ -79,7 +78,7 @@ public class ProcessConsoleFrame extends ConsoleFrame {
     }
 
     @Override
-    protected void performClose() {
+    public void performClose() {
         if (hasProcess()) {
             if (killOnClose) {
                 performKill();

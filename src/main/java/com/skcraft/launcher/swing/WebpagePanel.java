@@ -33,7 +33,7 @@ public final class WebpagePanel extends JPanel {
     private final WebpagePanel self = this;
     
     private URL url;
-    private boolean activated;
+    public boolean activated;
     private JEditorPane documentView;
     private JProgressBar progressBar;
     private Thread thread;
@@ -48,7 +48,7 @@ public final class WebpagePanel extends JPanel {
 
     private WebpagePanel(URL url, boolean lazy) {
         this.url = url;
-        
+
         setLayout(new BorderLayout());
         
         if (lazy) {
@@ -101,8 +101,14 @@ public final class WebpagePanel extends JPanel {
         });
         
         JScrollPane scrollPane = new JScrollPane(documentView);
+        JScrollBar bar = scrollPane.getVerticalScrollBar();
+        bar.setBlockIncrement(2);
+        bar.setUI(new CustomJScrollPane());
         panel.add(scrollPane, new Integer(1));
         scrollPane.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS);
+        scrollPane.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
+        scrollPane.setBorder(BorderFactory.createEmptyBorder());
+        scrollPane.setBorder(BorderFactory.createLineBorder(new Color(0xff86493b)));
         
         progressBar = new JProgressBar();
         progressBar.setIndeterminate(true);
@@ -171,7 +177,7 @@ public final class WebpagePanel extends JPanel {
      * 
      * @param url the URL
      */
-    private synchronized void fetchAndDisplay(URL url) {
+    public synchronized void fetchAndDisplay(URL url) {
         if (thread != null) {
             thread.interrupt();
         }
@@ -192,7 +198,11 @@ public final class WebpagePanel extends JPanel {
         Enumeration<?> e = document.getStyleNames();
         while (e.hasMoreElements()) {
             Object o = e.nextElement();
-            document.removeStyle((String) o);
+            try {
+                document.removeStyle((String) o);
+            }catch(NullPointerException npe) {
+                //Couldn't remove styles
+            }
         }
         
         document.setBase(baseUrl);
@@ -214,7 +224,7 @@ public final class WebpagePanel extends JPanel {
         public FetchWebpage(URL url) {
             this.url = url;
         }
-        
+
         @Override
         public void run() {
             HttpURLConnection conn = null;
@@ -231,41 +241,36 @@ public final class WebpagePanel extends JPanel {
 
                 checkInterrupted();
 
-                if (conn.getResponseCode() != 200) {
-                    throw new IOException(
-                            "Did not get expected 200 code, got "
-                                    + conn.getResponseCode());
+                if(conn.getResponseCode() != 200) {
+                    throw new IOException("Did not get expected 200 code, got " + conn.getResponseCode());
                 }
 
-                BufferedReader reader = new BufferedReader(
-                        new InputStreamReader(conn.getInputStream(),
-                                "UTF-8"));
+                BufferedReader reader = new BufferedReader(new InputStreamReader(conn.getInputStream(), "UTF-8"));
 
                 StringBuilder s = new StringBuilder();
                 char[] buf = new char[1024];
                 int len = 0;
-                while ((len = reader.read(buf)) != -1) {
+                while((len = reader.read(buf)) != -1) {
                     s.append(buf, 0, len);
                 }
                 String result = s.toString();
-                
+
                 checkInterrupted();
 
                 setDisplay(result, LauncherUtils.concat(url, ""));
-            } catch (IOException e) {
-                if (Thread.interrupted()) {
+            }catch(IOException e) {
+                if(Thread.interrupted()) {
                     return;
                 }
-                
+
                 log.log(Level.WARNING, "Failed to fetch page", e);
                 setError("Failed to fetch page: " + e.getMessage());
-            } catch (InterruptedException e) {
-            } finally {
-                if (conn != null)
+            }catch(InterruptedException e) {
+            }finally {
+                if(conn != null)
                     conn.disconnect();
                 conn = null;
             }
         }
     }
-
 }

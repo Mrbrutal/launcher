@@ -249,9 +249,7 @@ public final class Launcher {
      */
     public URL getNewsURL() {
         try {
-            return HttpRequest.url(
-                    String.format(getProperties().getProperty("newsUrl"),
-                            URLEncoder.encode(getVersion(), "UTF-8")));
+            return HttpRequest.url(String.format(getProperties().getProperty("newsUrl"), URLEncoder.encode(getVersion(), "UTF-8")));
         } catch (UnsupportedEncodingException e) {
             throw new RuntimeException(e);
         }

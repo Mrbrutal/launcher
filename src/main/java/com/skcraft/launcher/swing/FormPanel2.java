@@ -1,7 +1,8 @@
 /*
- * SK's Minecraft Launcher
- * Copyright (C) 2010-2014 Albert Pham <http://www.sk89q.com> and contributors
- * Please see LICENSE.txt for license information.
+ * Copyright (c) 2014 Mrbrutal. All rights reserved.
+ * Do not modify or redistribute without written permission.
+ *
+ * @author Mrbrutal
  */
 
 package com.skcraft.launcher.swing;
@@ -9,7 +10,7 @@ package com.skcraft.launcher.swing;
 import javax.swing.*;
 import java.awt.*;
 
-public class FormPanel extends JPanel {
+public class FormPanel2 extends JPanel {
 
     private static final GridBagConstraints labelConstraints;
     private static final GridBagConstraints fieldConstraints;
@@ -33,7 +34,7 @@ public class FormPanel extends JPanel {
         wideFieldConstraints.insets = new Insets(7, 2, 1, 2);
     }
 
-    public FormPanel() {
+    public FormPanel2() {
         setLayout(layout = new GridBagLayout());
         setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
     }
@@ -48,16 +49,5 @@ public class FormPanel extends JPanel {
     public void addRow(Component component) {
         add(component);
         layout.setConstraints(component, wideFieldConstraints);
-    }
-
-    @Override
-    public void paintComponent(Graphics g) {
-        super.paintComponent(g);
-        Graphics2D g2d = (Graphics2D) g;
-        //g2d.drawImage(img, 0, 0, null);
-        GradientPaint gp = new GradientPaint(0, 0, new Color(0xff86493b), 0, this.getHeight(), new Color(0xff1c1c1e));
-        g2d.setPaint(gp);
-        g2d.fillRect(0, 0, this.getWidth(), this.getHeight());
-        this.repaint();
     }
 }

@@ -29,16 +29,18 @@ import lombok.extern.java.Log;
 import org.apache.commons.io.FileUtils;
 
 import javax.swing.*;
+import javax.swing.event.ListSelectionEvent;
+import javax.swing.event.ListSelectionListener;
 import javax.swing.event.TableModelEvent;
 import javax.swing.event.TableModelListener;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
-import java.awt.event.MouseEvent;
+import java.awt.event.*;
 import java.io.File;
 import java.io.IOException;
+import java.net.MalformedURLException;
 import java.net.URL;
-import java.util.Date;
+import java.util.*;
+import java.util.List;
 import java.util.logging.Level;
 
 import static com.google.common.util.concurrent.MoreExecutors.sameThreadExecutor;
@@ -58,14 +60,29 @@ public class LauncherFrame extends JFrame {
     private final JScrollPane instanceScroll = new JScrollPane(instancesTable);
     private WebpagePanel webView;
     private JSplitPane splitPane;
-    private final JPanel container = new JPanel();
+    private final CustomJPane container = new CustomJPane();
     private final LinedBoxPanel buttonsPanel = new LinedBoxPanel(true).fullyPadded();
     private final JButton launchButton = new JButton(_("launcher.launch"));
     private final JButton refreshButton = new JButton(_("launcher.checkForUpdates"));
     private final JButton optionsButton = new JButton(_("launcher.options"));
-    private final JButton selfUpdateButton = new JButton(_("launcher.updateLauncher"));
+    //private final JButton selfUpdateButton = new JButton(_("launcher.updateLauncher"));
     private final JCheckBox updateCheck = new JCheckBox(_("launcher.downloadUpdates"));
+
+    private final CustomJLabel refresh = new CustomJLabel("refresh");
+    private final CustomJLabel launch = new CustomJLabel("launch");
+    private final CustomJLabel options = new CustomJLabel("launch");
+    private final CustomJLabel update = new CustomJLabel("refresh");
+
+    private final CustomJLabel x = new CustomJLabel("x");
+    private final CustomJLabel max = new CustomJLabel("max");
+    private final CustomJLabel min = new CustomJLabel("min");
+
+    private JLabel name;
+
     private URL updateUrl;
+
+    private boolean resized = false;
+    private Point initialClick;
 
     /**
      * Create a new frame.
@@ -77,12 +94,14 @@ public class LauncherFrame extends JFrame {
 
         this.launcher = launcher;
         instancesModel = new InstanceTableModel(launcher.getInstances());
+        name = new JLabel(_("launcher.title", launcher.getVersion()));
 
         setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
-        setSize(700, 450);
+        setSize(700, 470);
         setMinimumSize(new Dimension(400, 300));
         initComponents();
         setLocationRelativeTo(null);
+        setUndecorated(true);
 
         SwingHelper.setIconImage(this, Launcher.class, "icon.png");
 
@@ -92,23 +111,80 @@ public class LauncherFrame extends JFrame {
 
     private void initComponents() {
         webView = WebpagePanel.forURL(launcher.getNewsURL(), false);
+        //webView = WebpagePanel.forHTML("Testing");
+        webView.setBorder(BorderFactory.createEmptyBorder());
+        instanceScroll.setBorder(BorderFactory.createEmptyBorder());
+        instanceScroll.setBorder(BorderFactory.createLineBorder(new Color(0xff86493b)));
         splitPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, instanceScroll, webView);
-        selfUpdateButton.setVisible(false);
+        splitPane.setBorder(BorderFactory.createEmptyBorder());
+        update.setVisible(false);
+
+        refresh.setSize(122, 28);
+        refresh.setText(_("launcher.checkForUpdates"));
+        refresh.setHorizontalTextPosition(JLabel.CENTER);
+        refresh.setVerticalTextPosition(JLabel.CENTER);
+
+        launch.setSize(82, 28);
+        launch.setText(_("launcher.launch"));
+        launch.setHorizontalTextPosition(JLabel.CENTER);
+        launch.setVerticalTextPosition(JLabel.CENTER);
+        launch.setFont(launch.getFont().deriveFont(Font.BOLD));
+
+        options.setSize(82, 28);
+        options.setText(_("launcher.options"));
+        options.setHorizontalTextPosition(JLabel.CENTER);
+        options.setVerticalTextPosition(JLabel.CENTER);
+
+        update.setSize(82, 28);
+        update.setText(_("launcher.updateLauncher"));
+        update.setHorizontalTextPosition(JLabel.CENTER);
+        update.setVerticalTextPosition(JLabel.CENTER);
+
+        x.setSize(30,20);
+        max.setSize(20, 20);
+        min.setSize(20, 20);
+        name.setForeground(Color.white);
+        name.setFont(name.getFont().deriveFont(Font.BOLD));
+        name.setFont(name.getFont().deriveFont(14.0f));
+        name.setBorder(BorderFactory.createEmptyBorder(12, 12, 10, 10));
 
         updateCheck.setSelected(true);
         instancesTable.setModel(instancesModel);
+        instancesTable.getSelectionModel().clearSelection();
+        instancesTable.getTableHeader().setReorderingAllowed(false);
         launchButton.setFont(launchButton.getFont().deriveFont(Font.BOLD));
+        launchButton.setBackground(new Color(0xff1c1c1e));
+        refreshButton.setBackground(new Color(0xff1c1c1e));
+        optionsButton.setBackground(new Color(0xff1c1c1e));
+        //selfUpdateButton.setBackground(new Color(0xff1c1c1e));
+        updateCheck.setBackground(new Color(0xff1c1c1e));
+        updateCheck.setForeground(Color.white);
         splitPane.setDividerLocation(200);
         splitPane.setDividerSize(4);
+        splitPane.setBackground(new Color(0xff86493b));
         SwingHelper.flattenJSplitPane(splitPane);
-        buttonsPanel.addElement(refreshButton);
-        buttonsPanel.addElement(updateCheck);
+        buttonsPanel.setBackground(new Color(0xff1c1c1e));
+
+        //buttonsPanel.addElement(refreshButton);
+        buttonsPanel.addElement(refresh);
+        buttonsPanel.addElement(update);
+        //buttonsPanel.addElement(updateCheck);
         buttonsPanel.addGlue();
-        buttonsPanel.addElement(selfUpdateButton);
-        buttonsPanel.addElement(optionsButton);
-        buttonsPanel.addElement(launchButton);
+        //buttonsPanel.addElement(optionsButton);
+        buttonsPanel.addElement(options);
+        //buttonsPanel.addElement(launchButton);
+        buttonsPanel.addElement(launch);
+
         container.setLayout(new BorderLayout());
         container.setBorder(BorderFactory.createEmptyBorder(10, 10, 0, 10));
+
+        header.add(name);
+        header.add(Box.createHorizontalGlue());
+        header.add(min);
+        header.add(max);
+        header.add(x);
+        add(header, BorderLayout.NORTH);
+
         container.add(splitPane, BorderLayout.CENTER);
         add(buttonsPanel, BorderLayout.SOUTH);
         add(container, BorderLayout.CENTER);
@@ -116,7 +192,7 @@ public class LauncherFrame extends JFrame {
         instancesModel.addTableModelListener(new TableModelListener() {
             @Override
             public void tableChanged(TableModelEvent e) {
-                if (instancesTable.getRowCount() > 0) {
+                if(instancesTable.getRowCount() > 0) {
                     instancesTable.setRowSelectionInterval(0, 0);
                 }
             }
@@ -129,13 +205,6 @@ public class LauncherFrame extends JFrame {
             public void actionPerformed(ActionEvent e) {
                 loadInstances();
                 checkLauncherUpdate();
-            }
-        });
-
-        selfUpdateButton.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                selfUpdate();
             }
         });
 
@@ -158,16 +227,395 @@ public class LauncherFrame extends JFrame {
             protected void showPopup(MouseEvent e) {
                 int index = instancesTable.rowAtPoint(e.getPoint());
                 Instance selected = null;
-                if (index >= 0) {
+                if(index >= 0) {
                     instancesTable.setRowSelectionInterval(index, index);
                     selected = launcher.getInstances().get(index);
                 }
                 popupInstanceMenu(e.getComponent(), e.getX(), e.getY(), selected);
             }
         });
+
+        instancesTable.addMouseListener(new MouseAdapter() {
+            @Override
+            public void mouseClicked(MouseEvent e) {
+                int index = instancesTable.rowAtPoint(e.getPoint());
+                if(index == -1) {
+                    instancesTable.clearSelection();
+                }
+            }
+        });
+
+        instancesTable.getSelectionModel().addListSelectionListener(new ListSelectionListener() {
+            @Override
+            public void valueChanged(ListSelectionEvent e) {
+                int row = instancesTable.getSelectedRow();
+                if(row == -1) {
+                    webView.fetchAndDisplay(launcher.getNewsURL());
+                }
+                else {
+                    Instance sel = launcher.getInstances().get(row);
+                    try {
+                        URL url = new URL("http://launcher.meansoft.si/news/" + sel.getName() + ".htm");
+                        webView.fetchAndDisplay(url);
+                    }catch(MalformedURLException e1) {
+                        e1.printStackTrace();
+                    }
+                }
+            }
+        });
+
+        refresh.addMouseListener(new MouseListener() {
+            boolean entered = false;
+
+            @Override
+            public void mouseClicked(MouseEvent e) {
+                loadInstances();
+                checkLauncherUpdate();
+            }
+
+            @Override
+            public void mousePressed(MouseEvent e) {
+                ImageIcon icon = new ImageIcon(SwingHelper.readIconImage(Launcher.class, "button/button_pressed_" + refresh.name + ".png"));
+                refresh.setIcon(icon);
+            }
+
+            @Override
+            public void mouseReleased(MouseEvent e) {
+                ImageIcon icon;
+                if(entered) {
+                    icon = new ImageIcon(SwingHelper.readIconImage(Launcher.class, "button/button_hover_" + refresh.name + ".png"));
+                }
+                else {
+                    icon = new ImageIcon(SwingHelper.readIconImage(Launcher.class, "button/button_default_" + refresh.name + ".png"));
+                }
+                refresh.setIcon(icon);
+            }
+
+            @Override
+            public void mouseEntered(MouseEvent e) {
+                ImageIcon icon = new ImageIcon(SwingHelper.readIconImage(Launcher.class, "button/button_hover_" + refresh.name + ".png"));
+                refresh.setIcon(icon);
+                entered = true;
+            }
+
+            @Override
+            public void mouseExited(MouseEvent e) {
+                ImageIcon icon = new ImageIcon(SwingHelper.readIconImage(Launcher.class, "button/button_default_" + refresh.name + ".png"));
+                refresh.setIcon(icon);
+                entered = false;
+            }
+        });
+
+        launch.addMouseListener(new MouseListener() {
+            boolean entered = false;
+
+            @Override
+            public void mouseClicked(MouseEvent e) {
+                launch();
+            }
+
+            @Override
+            public void mousePressed(MouseEvent e) {
+                ImageIcon icon = new ImageIcon(SwingHelper.readIconImage(Launcher.class, "button/button_pressed_" + launch.name + ".png"));
+                launch.setIcon(icon);
+            }
+
+            @Override
+            public void mouseReleased(MouseEvent e) {
+                ImageIcon icon;
+                if(entered) {
+                    icon = new ImageIcon(SwingHelper.readIconImage(Launcher.class, "button/button_hover_" + launch.name + ".png"));
+                }
+                else {
+                    icon = new ImageIcon(SwingHelper.readIconImage(Launcher.class, "button/button_default_" + launch.name + ".png"));
+                }
+                launch.setIcon(icon);
+            }
+
+            @Override
+            public void mouseEntered(MouseEvent e) {
+                ImageIcon icon = new ImageIcon(SwingHelper.readIconImage(Launcher.class, "button/button_hover_" + launch.name + ".png"));
+                launch.setIcon(icon);
+                entered = true;
+            }
+
+            @Override
+            public void mouseExited(MouseEvent e) {
+                ImageIcon icon = new ImageIcon(SwingHelper.readIconImage(Launcher.class, "button/button_default_" + launch.name + ".png"));
+                launch.setIcon(icon);
+                entered = false;
+            }
+        });
+
+        options.addMouseListener(new MouseListener() {
+            boolean entered = false;
+
+            @Override
+            public void mouseClicked(MouseEvent e) {
+                showOptions();
+            }
+
+            @Override
+            public void mousePressed(MouseEvent e) {
+                ImageIcon icon = new ImageIcon(SwingHelper.readIconImage(Launcher.class, "button/button_pressed_" + options.name + ".png"));
+                options.setIcon(icon);
+            }
+
+            @Override
+            public void mouseReleased(MouseEvent e) {
+                ImageIcon icon;
+                if(entered) {
+                    icon = new ImageIcon(SwingHelper.readIconImage(Launcher.class, "button/button_hover_" + options.name + ".png"));
+                }
+                else {
+                    icon = new ImageIcon(SwingHelper.readIconImage(Launcher.class, "button/button_default_" + options.name + ".png"));
+                }
+                options.setIcon(icon);
+            }
+
+            @Override
+            public void mouseEntered(MouseEvent e) {
+                ImageIcon icon = new ImageIcon(SwingHelper.readIconImage(Launcher.class, "button/button_hover_" + options.name + ".png"));
+                options.setIcon(icon);
+                entered = true;
+            }
+
+            @Override
+            public void mouseExited(MouseEvent e) {
+                ImageIcon icon = new ImageIcon(SwingHelper.readIconImage(Launcher.class, "button/button_default_" + options.name + ".png"));
+                options.setIcon(icon);
+                entered = false;
+            }
+        });
+
+        update.addMouseListener(new MouseListener() {
+            boolean entered = false;
+
+            @Override
+            public void mouseClicked(MouseEvent e) {
+                selfUpdate();
+            }
+
+            @Override
+            public void mousePressed(MouseEvent e) {
+                ImageIcon icon = new ImageIcon(SwingHelper.readIconImage(Launcher.class, "button/button_pressed_" + update.name + ".png"));
+                update.setIcon(icon);
+            }
+
+            @Override
+            public void mouseReleased(MouseEvent e) {
+                ImageIcon icon;
+                if(entered) {
+                    icon = new ImageIcon(SwingHelper.readIconImage(Launcher.class, "button/button_hover_" + update.name + ".png"));
+                }
+                else {
+                    icon = new ImageIcon(SwingHelper.readIconImage(Launcher.class, "button/button_default_" + update.name + ".png"));
+                }
+                update.setIcon(icon);
+            }
+
+            @Override
+            public void mouseEntered(MouseEvent e) {
+                ImageIcon icon = new ImageIcon(SwingHelper.readIconImage(Launcher.class, "button/button_hover_" + update.name + ".png"));
+                update.setIcon(icon);
+                entered = true;
+            }
+
+            @Override
+            public void mouseExited(MouseEvent e) {
+                ImageIcon icon = new ImageIcon(SwingHelper.readIconImage(Launcher.class, "button/button_default_" + update.name + ".png"));
+                update.setIcon(icon);
+                entered = false;
+            }
+        });
+
+        x.addMouseListener(new MouseListener() {
+            boolean entered = false;
+
+            @Override
+            public void mouseClicked(MouseEvent e) {
+                System.exit(0);
+            }
+
+            @Override
+            public void mousePressed(MouseEvent e) {
+                ImageIcon icon = new ImageIcon(SwingHelper.readIconImage(Launcher.class, "button/" + x.name + "_pressed.png"));
+                x.setIcon(icon);
+            }
+
+            @Override
+            public void mouseReleased(MouseEvent e) {
+                ImageIcon icon;
+                if(entered) {
+                    icon = new ImageIcon(SwingHelper.readIconImage(Launcher.class, "button/" + x.name + "_hover.png"));
+                }
+                else {
+                    icon = new ImageIcon(SwingHelper.readIconImage(Launcher.class, "button/" + x.name + "_default.png"));
+                }
+                x.setIcon(icon);
+            }
+
+            @Override
+            public void mouseEntered(MouseEvent e) {
+                entered = true;
+                ImageIcon icon = new ImageIcon(SwingHelper.readIconImage(Launcher.class, "button/" + x.name + "_hover.png"));
+                x.setIcon(icon);
+            }
+
+            @Override
+            public void mouseExited(MouseEvent e) {
+                entered = false;
+                ImageIcon icon = new ImageIcon(SwingHelper.readIconImage(Launcher.class, "button/" + x.name + "_default.png"));
+                x.setIcon(icon);
+            }
+        });
+
+        max.addMouseListener(new MouseListener() {
+            boolean entered = false;
+
+            @Override
+            public void mouseClicked(MouseEvent e) {
+                if(resized) {
+                    setSize(700, 470);
+                    setLocationRelativeTo(null);
+                    resized = false;
+                }else {
+                    GraphicsEnvironment env = GraphicsEnvironment.getLocalGraphicsEnvironment();
+                    setMaximizedBounds(env.getMaximumWindowBounds());
+                    setExtendedState(getExtendedState() | JFrame.MAXIMIZED_BOTH);
+                    resized = true;
+                }
+            }
+
+            @Override
+            public void mousePressed(MouseEvent e) {
+                ImageIcon icon;
+                if(resized) {
+                    icon = new ImageIcon(SwingHelper.readIconImage(Launcher.class, "button/" + max.name + "_full_pressed.png"));
+                }
+                else {
+                    icon = new ImageIcon(SwingHelper.readIconImage(Launcher.class, "button/" + max.name + "_pressed.png"));
+                }
+                max.setIcon(icon);
+            }
+
+            @Override
+            public void mouseReleased(MouseEvent e) {
+                ImageIcon icon;
+                if(entered) {
+                    if(resized) {
+                        icon = new ImageIcon(SwingHelper.readIconImage(Launcher.class, "button/" + max.name + "_full_hover.png"));
+                    }else {
+                        icon = new ImageIcon(SwingHelper.readIconImage(Launcher.class, "button/" + max.name + "_hover.png"));
+                    }
+                }
+                else {
+                    if(resized) {
+                        icon = new ImageIcon(SwingHelper.readIconImage(Launcher.class, "button/" + max.name + "_full_default.png"));
+                    }else {
+                        icon = new ImageIcon(SwingHelper.readIconImage(Launcher.class, "button/" + max.name + "_default.png"));
+                    }
+                }
+                max.setIcon(icon);
+            }
+
+            @Override
+            public void mouseEntered(MouseEvent e) {
+                ImageIcon icon;
+                if(resized) {
+                    icon = new ImageIcon(SwingHelper.readIconImage(Launcher.class, "button/" + max.name + "_full_hover.png"));
+                }
+                else {
+                    icon = new ImageIcon(SwingHelper.readIconImage(Launcher.class, "button/" + max.name + "_hover.png"));
+                }
+                max.setIcon(icon);
+                entered = true;
+            }
+
+            @Override
+            public void mouseExited(MouseEvent e) {
+                ImageIcon icon;
+                if(resized) {
+                    icon = new ImageIcon(SwingHelper.readIconImage(Launcher.class, "button/" + max.name + "_full_default.png"));
+                }
+                else {
+                    icon = new ImageIcon(SwingHelper.readIconImage(Launcher.class, "button/" + max.name + "_default.png"));
+                }
+                max.setIcon(icon);
+                entered = false;
+            }
+        });
+
+        min.addMouseListener(new MouseListener() {
+            boolean entered = false;
+
+            @Override
+            public void mouseClicked(MouseEvent e) {
+                setExtendedState(JFrame.ICONIFIED);
+            }
+
+            @Override
+            public void mousePressed(MouseEvent e) {
+                ImageIcon icon = new ImageIcon(SwingHelper.readIconImage(Launcher.class, "button/" + min.name + "_pressed.png"));
+                min.setIcon(icon);
+            }
+
+            @Override
+            public void mouseReleased(MouseEvent e) {
+                ImageIcon icon;
+                if(entered) {
+                    icon = new ImageIcon(SwingHelper.readIconImage(Launcher.class, "button/" + min.name + "_hover.png"));
+                }
+                else {
+                    icon = new ImageIcon(SwingHelper.readIconImage(Launcher.class, "button/" + min.name + "_default.png"));
+                }
+                min.setIcon(icon);
+            }
+
+            @Override
+            public void mouseEntered(MouseEvent e) {
+                ImageIcon icon = new ImageIcon(SwingHelper.readIconImage(Launcher.class, "button/" + min.name + "_hover.png"));
+                min.setIcon(icon);
+                entered = true;
+            }
+
+            @Override
+            public void mouseExited(MouseEvent e) {
+                ImageIcon icon = new ImageIcon(SwingHelper.readIconImage(Launcher.class, "button/" + min.name + "_default.png"));
+                min.setIcon(icon);
+                entered = false;
+            }
+        });
+
+        header.addMouseListener(new MouseAdapter() {
+            @Override
+            public void mousePressed(MouseEvent e) {
+                initialClick = e.getPoint();
+            }
+        });
+
+        header.addMouseMotionListener(new MouseMotionAdapter() {
+            @Override
+            public void mouseDragged(MouseEvent e) {
+                if(!resized) {
+                    // get location of Window
+                    int thisX = getLocation().x;
+                    int thisY = getLocation().y;
+
+                    // Determine how much the mouse moved since the initial click
+                    int xMoved = (thisX + e.getX()) - (thisX + initialClick.x);
+                    int yMoved = (thisY + e.getY()) - (thisY + initialClick.y);
+
+                    // Move window to this position
+                    int X = thisX + xMoved;
+                    int Y = thisY + yMoved;
+                    setLocation(X, Y);
+                }
+            }
+        });
     }
 
-    private void checkLauncherUpdate() {
+    public void checkLauncherUpdate() {
         if (SelfUpdater.updatedAlready) {
             return;
         }
@@ -199,7 +647,7 @@ public class LauncherFrame extends JFrame {
             Futures.addCallback(future, new FutureCallback<File>() {
                 @Override
                 public void onSuccess(File result) {
-                    selfUpdateButton.setVisible(false);
+                    update.setVisible(false);
                     SwingHelper.showMessageDialog(
                             LauncherFrame.this,
                             _("launcher.selfUpdateComplete"),
@@ -216,13 +664,13 @@ public class LauncherFrame extends JFrame {
             ProgressDialog.showProgress(this, future, _("launcher.selfUpdatingTitle"), _("launcher.selfUpdatingStatus"));
             SwingHelper.addErrorDialogCallback(this, future);
         } else {
-            selfUpdateButton.setVisible(false);
+            update.setVisible(false);
         }
     }
 
     private void requestUpdate(URL url) {
         this.updateUrl = url;
-        selfUpdateButton.setVisible(true);
+        update.setVisible(true);
     }
 
     /**
@@ -381,7 +829,7 @@ public class LauncherFrame extends JFrame {
         }, SwingExecutor.INSTANCE);
     }
 
-    private void loadInstances() {
+    public void loadInstances() {
         InstanceList.Enumerator loader = launcher.getInstances().createEnumerator();
         ObservableFuture<InstanceList> future = new ObservableFuture<InstanceList>(
                 launcher.getExecutor().submit(loader), loader);
@@ -390,9 +838,6 @@ public class LauncherFrame extends JFrame {
             @Override
             public void run() {
                 instancesModel.update();
-                if (instancesTable.getRowCount() > 0) {
-                    instancesTable.setRowSelectionInterval(0, 0);
-                }
                 requestFocus();
             }
         }, SwingExecutor.INSTANCE);
@@ -401,12 +846,12 @@ public class LauncherFrame extends JFrame {
         SwingHelper.addErrorDialogCallback(this, future);
     }
 
-    private void showOptions() {
+    public void showOptions() {
         ConfigurationDialog configDialog = new ConfigurationDialog(this, launcher);
         configDialog.setVisible(true);
     }
 
-    private void launch() {
+    public void launch() {
         try {
             final Instance instance = launcher.getInstances().get(instancesTable.getSelectedRow());
             boolean update = updateCheck.isSelected() && instance.isUpdatePending();
@@ -471,12 +916,10 @@ public class LauncherFrame extends JFrame {
 
         // Get the process
         Runner task = new Runner(launcher, instance, session, extractDir);
-        ObservableFuture<Process> processFuture = new ObservableFuture<Process>(
-                launcher.getExecutor().submit(task), task);
+        ObservableFuture<Process> processFuture = new ObservableFuture<Process>(launcher.getExecutor().submit(task), task);
 
         // Show process for the process retrieval
-        ProgressDialog.showProgress(
-                this, processFuture, _("launcher.launchingTItle"), _("launcher.launchingStatus", instance.getTitle()));
+        ProgressDialog.showProgress(this, processFuture, _("launcher.launchingTItle"), _("launcher.launchingStatus", instance.getTitle()));
 
         // If the process is started, get rid of this window
         Futures.addCallback(processFuture, new FutureCallback<Process>() {
@@ -509,5 +952,4 @@ public class LauncherFrame extends JFrame {
             }
         }, sameThreadExecutor());
     }
-
 }

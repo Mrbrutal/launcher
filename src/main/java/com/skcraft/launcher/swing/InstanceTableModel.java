@@ -25,12 +25,9 @@ public class InstanceTableModel extends AbstractTableModel {
 
     public InstanceTableModel(InstanceList instances) {
         this.instances = instances;
-        instanceIcon = new ImageIcon(SwingHelper.readIconImage(Launcher.class, "instance_icon.png")
-                .getScaledInstance(16, 16, Image.SCALE_SMOOTH));
-        customInstanceIcon = new ImageIcon(SwingHelper.readIconImage(Launcher.class, "custom_instance_icon.png")
-                .getScaledInstance(16, 16, Image.SCALE_SMOOTH));
-        downloadIcon = new ImageIcon(SwingHelper.readIconImage(Launcher.class, "download_icon.png")
-                .getScaledInstance(14, 14, Image.SCALE_SMOOTH));
+        instanceIcon = new ImageIcon(SwingHelper.readIconImage(Launcher.class, "custom_instance_icon.png").getScaledInstance(32, 32, Image.SCALE_SMOOTH));
+        customInstanceIcon = new ImageIcon(SwingHelper.readIconImage(Launcher.class, "custom_instance_icon.png").getScaledInstance(32, 32, Image.SCALE_SMOOTH));
+        downloadIcon = new ImageIcon(SwingHelper.readIconImage(Launcher.class, "download_icon.png").getScaledInstance(32, 32, Image.SCALE_SMOOTH));
     }
 
     public void update() {
@@ -42,7 +39,7 @@ public class InstanceTableModel extends AbstractTableModel {
     public String getColumnName(int columnIndex) {
         switch (columnIndex) {
             case 0:
-                return "";
+                return _("launcher.modpackIcon");
             case 1:
                 return _("launcher.modpackColumn");
             default:
@@ -78,7 +75,7 @@ public class InstanceTableModel extends AbstractTableModel {
     public boolean isCellEditable(int rowIndex, int columnIndex) {
         switch (columnIndex) {
             case 0:
-                return true;
+                return false;
             case 1:
                 return false;
             default:
@@ -119,14 +116,13 @@ public class InstanceTableModel extends AbstractTableModel {
 
     private String getAddendum(Instance instance) {
         if (!instance.isLocal()) {
-            return " <span style=\"color: #cccccc\">" + _("launcher.notInstalledHint") + "</span>";
+            return " <span style=\"color: #cccccc\">" + "<br>"  + _("launcher.notInstalledHint") + "</span>";
         } else if (!instance.isInstalled()) {
-            return " <span style=\"color: red\">" + _("launcher.requiresUpdateHint") + "</span>";
+            return " <span style=\"color: red\">" + "<br>" + _("launcher.requiresUpdateHint") + "</span>";
         } else if (instance.isUpdatePending()) {
-            return " <span style=\"color: #3758DB\">" + _("launcher.updatePendingHint") + "</span>";
+            return " <span style=\"color: #3758DB\">" + "<br>"  + _("launcher.updatePendingHint") + "</span>";
         } else {
-            return "";
+            return " <span style=\"color: #5a7667\">" + "<br>" + _("launcher.ready") + "</span>";
         }
     }
-
 }

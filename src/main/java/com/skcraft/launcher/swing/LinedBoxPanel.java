@@ -22,8 +22,7 @@ public class LinedBoxPanel extends JPanel {
 
     public LinedBoxPanel(boolean horizontal) {
         this.horizontal = horizontal;
-        setLayout(new BoxLayout(this,
-                horizontal ? BoxLayout.X_AXIS : BoxLayout.Y_AXIS));
+        setLayout(new BoxLayout(this, horizontal ? BoxLayout.X_AXIS : BoxLayout.Y_AXIS));
         setBorder(BorderFactory.createEmptyBorder(0, 10, 10, 10));
     }
 

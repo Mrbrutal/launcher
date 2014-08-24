@@ -29,22 +29,22 @@ public class ConfigurationDialog extends JDialog {
 
     private final JPanel tabContainer = new JPanel(new BorderLayout());
     private final JTabbedPane tabbedPane = new JTabbedPane();
-    private final FormPanel javaSettingsPanel = new FormPanel();
+    private final FormPanel2 javaSettingsPanel = new FormPanel2();
     private final JTextField jvmPathText = new JTextField();
     private final JTextField jvmArgsText = new JTextField();
     private final JSpinner minMemorySpinner = new JSpinner();
     private final JSpinner maxMemorySpinner = new JSpinner();
     private final JSpinner permGenSpinner = new JSpinner();
-    private final FormPanel gameSettingsPanel = new FormPanel();
+    private final FormPanel2 gameSettingsPanel = new FormPanel2();
     private final JSpinner widthSpinner = new JSpinner();
     private final JSpinner heightSpinner = new JSpinner();
-    private final FormPanel proxySettingsPanel = new FormPanel();
+    private final FormPanel2 proxySettingsPanel = new FormPanel2();
     private final JCheckBox useProxyCheck = new JCheckBox(_("options.useProxyCheck"));
     private final JTextField proxyHostText = new JTextField();
     private final JSpinner proxyPortText = new JSpinner();
     private final JTextField proxyUsernameText = new JTextField();
     private final JPasswordField proxyPasswordText = new JPasswordField();
-    private final FormPanel advancedPanel = new FormPanel();
+    private final FormPanel2 advancedPanel = new FormPanel2();
     private final JTextField gameKeyText = new JTextField();
     private final LinedBoxPanel buttonsPanel = new LinedBoxPanel(true);
     private final JButton okButton = new JButton(_("button.ok"));

@@ -32,11 +32,16 @@ public class Instance implements Comparable<Instance> {
     @JsonProperty("launch")
     private LaunchModifier launchModifier;
 
-    @JsonIgnore private File dir;
-    @JsonIgnore private URL manifestURL;
-    @JsonIgnore private int priority;
-    @JsonIgnore private boolean selected;
-    @JsonIgnore private boolean local;
+    @JsonIgnore
+    private File dir;
+    @JsonIgnore
+    private URL manifestURL;
+    @JsonIgnore
+    private int priority;
+    @JsonIgnore
+    private boolean selected;
+    @JsonIgnore
+    private boolean local;
 
     /**
      * Get the tile of the instance, which might be the same as the
@@ -55,7 +60,7 @@ public class Instance implements Comparable<Instance> {
      * @param builder the process builder
      */
     public void modify(JavaProcessBuilder builder) {
-        if (launchModifier != null) {
+        if(launchModifier != null) {
             launchModifier.modify(builder);
         }
     }
@@ -69,7 +74,7 @@ public class Instance implements Comparable<Instance> {
     @JsonIgnore
     public File getContentDir() {
         File dir = new File(this.dir, "minecraft");
-        if (!dir.exists()) {
+        if(!dir.exists()) {
             dir.mkdirs();
         }
         return dir;
@@ -122,28 +127,28 @@ public class Instance implements Comparable<Instance> {
 
     @Override
     public int compareTo(Instance o) {
-        if (isLocal() && !o.isLocal()) {
+        if(isLocal() && !o.isLocal()) {
             return -1;
-        } else if (!isLocal() && o.isLocal()) {
+        }else if(!isLocal() && o.isLocal()) {
             return 1;
-        } else if (isLocal() && o.isLocal()) {
+        }else if(isLocal() && o.isLocal()) {
             Date otherDate = o.getLastAccessed();
 
-            if (otherDate == null && lastAccessed == null) {
+            if(otherDate == null && lastAccessed == null) {
                 return 0;
-            } else if (otherDate == null) {
+            }else if(otherDate == null) {
                 return -1;
-            } else if (lastAccessed == null) {
+            }else if(lastAccessed == null) {
                 return 1;
-            } else {
+            }else {
                 return -lastAccessed.compareTo(otherDate);
             }
-        } else {
-            if (priority > o.priority) {
+        }else {
+            if(priority > o.priority) {
                 return -1;
-            } else if (priority < o.priority) {
+            }else if(priority < o.priority) {
                 return 1;
-            } else {
+            }else {
                 return 0;
             }
         }

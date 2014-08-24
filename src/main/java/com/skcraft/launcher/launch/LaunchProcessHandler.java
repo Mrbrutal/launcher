@@ -67,6 +67,7 @@ public class LaunchProcessHandler implements Function<Process, ProcessConsoleFra
                 new LauncherFrame(launcher).setVisible(true);
 
                 if (consoleFrame != null) {
+                    consoleFrame.performClose();
                     consoleFrame.setProcess(null);
                     consoleFrame.requestFocus();
                 }

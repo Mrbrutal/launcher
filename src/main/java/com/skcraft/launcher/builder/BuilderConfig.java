@@ -37,13 +37,11 @@ public class BuilderConfig {
     public void registerProperties(PropertiesApplicator applicator) {
         if (features != null) {
             for (FeaturePattern feature : features) {
-                checkNotNull(emptyToNull(feature.getFeature().getName()),
-                        "Empty feature name found");
+                checkNotNull(emptyToNull(feature.getFeature().getName()), "Empty feature name found");
                 applicator.register(feature);
             }
         }
 
         applicator.setUserFiles(userFiles);
     }
-
 }

@@ -12,12 +12,13 @@ import java.awt.*;
 public class HeaderPanel extends JPanel {
 
     public HeaderPanel() {
-        setBackground(new Color(0xDB5036));
+        setBackground(new Color(0xff86493b));
+        setLayout(new BoxLayout(this, BoxLayout.X_AXIS));
     }
 
     @Override
     public Dimension getPreferredSize() {
-        return new Dimension(200, 60);
+        return new Dimension(200, 20);
     }
 
     @Override

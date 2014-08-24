@@ -68,8 +68,7 @@ public class Runner implements Callable<Process>, ProgressObservable {
      * @param session the session
      * @param extractDir the directory to extract to
      */
-    public Runner(@NonNull Launcher launcher, @NonNull Instance instance,
-                  @NonNull Session session, @NonNull File extractDir) {
+    public Runner(@NonNull Launcher launcher, @NonNull Instance instance, @NonNull Session session, @NonNull File extractDir) {
         this.launcher = launcher;
         this.instance = instance;
         this.session = session;
